@@ -1,0 +1,30 @@
+llm:
+  # LiteLLM route to Bedrock Claude 3.5 Sonnet
+  model: "bedrock/anthropic.claude-3-5-sonnet-20240620-v1:0"
+  temperature: 0.2
+  max_tokens: 800
+
+agents:
+  collector:
+    role: "Market Data Collector"
+    goal: "Fetch recent OHLCV for a given ticker and summarise context."
+    backstory: "Pulls clean data quickly from Yahoo Finance for quant workflows."
+    verbose: false
+    allow_delegation: false
+    tools: ["fetch_prices"]
+
+  analyst:
+    role: "Quant Analyst"
+    goal: "Engineer simple features and fit a quick baseline model."
+    backstory: "Prefers fast baselines (linear) to enable rapid iteration."
+    verbose: false
+    allow_delegation: false
+    tools: ["feature_engineer", "train_linear"]
+
+  predictor:
+    role: "Stock Predictor"
+    goal: "Estimate next-day close and explain rationale in plain English."
+    backstory: "Clear, pragmatic predictions with explicit caveats (not advice)."
+    verbose: false
+    allow_delegation: false
+    tools: ["predict_close"]

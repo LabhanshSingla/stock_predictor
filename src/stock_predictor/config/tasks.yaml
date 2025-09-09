@@ -1,0 +1,18 @@
+tasks:
+  collect_task:
+    description: "Collect {period}/{interval} price data for {ticker}."
+    expected_output: "Dict with rows/head/tail and raw frame as list columns."
+    agent: "collector"
+    tool: "fetch_prices"
+
+  analyze_task:
+    description: "Create features and train a linear baseline."
+    expected_output: "Dict with model bytes and the dataframe used."
+    agent: "analyst"
+    tool: "feature_engineer|train_linear"   # run tools in code
+
+  predict_task:
+    description: "Predict next-day close and provide a brief rationale."
+    expected_output: "Dict {ticker,last_close,predicted_close,pct_move,rationale}"
+    agent: "predictor"
+    tool: "predict_close"

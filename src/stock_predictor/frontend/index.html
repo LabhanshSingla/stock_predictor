@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>CrewAI Stock Predictor</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 24px; }
+    .card { max-width: 560px; padding: 20px; border: 1px solid #ddd; border-radius: 12px; }
+    input, select, button { padding: 10px; font-size: 16px; margin-right: 8px; }
+    .row { margin: 12px 0; }
+    .muted { color: #666; font-size: 14px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h2>🧠 CrewAI + Claude 3.5 — Stock Predictor (demo)</h2>
+  <div class="card">
+    <div class="row">
+      <input id="ticker" placeholder="Ticker (e.g., AAPL, TSLA)" />
+      <select id="period">
+        <option>3mo</option><option>6mo</option><option>1y</option>
+      </select>
+      <select id="interval">
+        <option>1d</option><option>1h</option><option>30m</option>
+      </select>
+      <button id="go">Predict</button>
+    </div>
+    <div class="row muted">Educational demo. Not financial advice.</div>
+    <pre id="out" class="mono"></pre>
+    <canvas id="chart" width="520" height="120" style="margin-top:12px;border:1px solid #ddd;border-radius:8px"></canvas>
+  </div>
+
+<script>
+  const out = document.getElementById('out');
+  const chart = document.getElementById('chart');
+
+  async function drawChart(t,p,i){
+    const res = await fetch(`/history?ticker=${encodeURIComponent(t)}&period=${p}&interval=${i}`);
+    const data = await res.json();
+    if (data.error) { out.textContent = 'Error: ' + data.error; return; }
+
+    const { closes } = data;
+    const ctx = chart.getContext('2d');
+    ctx.clearRect(0,0,chart.width,chart.height);
+
+    const min = Math.min(...closes), max = Math.max(...closes);
+    const pad = 10, W=chart.width-2*pad, H=chart.height-2*pad;
+
+    ctx.beginPath();
+    closes.forEach((v,idx)=>{
+      const x = pad + (idx/(closes.length-1))*W;
+      const y = pad + (1 - (v-min)/(max-min || 1))*H;
+      if(idx===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+  }
+
+  document.getElementById('go').onclick = async () => {
+    out.textContent = 'Loading...';
+    const t = document.getElementById('ticker').value.trim() || 'AAPL';
+    const p = document.getElementById('period').value;
+    const i = document.getElementById('interval').value;
+    try {
+      const res = await fetch(`/predict?ticker=${encodeURIComponent(t)}&period=${p}&interval=${i}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      out.textContent = JSON.stringify(data, null, 2);
+      drawChart(t,p,i);
+    } catch (e) {
+      out.textContent = 'Error: ' + e.message;
+    }
+  };
+</script>
+</body>
+</html>
